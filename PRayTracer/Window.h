@@ -18,7 +18,7 @@ public:
 	unsigned int framebuffer;
 	cudaGraphicsResource_t textureCudaResource;
 
-	Window(const char* windowName, bool isFullscreen = false, int width = 640, int height = 480);
+	Window(const char* windowName, bool isFullscreen = false, int width = 1200, int height = 600);
 	void createWindow(const char* windowName);
 	void linkKeyIn(void(*keyIn)(GLFWwindow* window, int key, int scancode, int action, int mods));
 	void cleanup();

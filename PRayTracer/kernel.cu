@@ -21,12 +21,13 @@ __global__ void render(cudaSurfaceObject_t surface, int width, int height, int s
 
 	col /= float(samples);
 
-	uchar4 data = make_uchar4(col[0], col[1], col[2], 255);
+	uchar4 data = make_uchar4(col[0] * 255, col[1] * 255, col[2] * 255, 255);
 	surf2Dwrite(data, surface, x * (int)sizeof(uchar4), y, cudaBoundaryModeClamp);
 }
 
 __device__ Vec3 color(const Ray& r, Hittable** world) {
 	HitRecord rec;
+
 	if ((*world)->hit(r, 0.0, FLT_MAX, rec)) {
 		return 0.5f * Vec3(rec.normal.x() + 1.0f, rec.normal.y() + 1.0f, rec.normal.z() + 1.0f);
 	}

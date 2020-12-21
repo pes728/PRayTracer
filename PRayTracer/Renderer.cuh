@@ -12,13 +12,14 @@
 
 #include "checkCuda.h"
 
+extern "C" void callInitRand(dim3 block, dim3 threads, int width, int height, curandState * randState);
+extern "C" void callCreateWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
+extern "C" void callFreeWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
+
 __global__ void initRand(int width, int height, curandState* randState);
 __global__ void createWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
 __global__ void freeWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
 
-extern "C" void callInitRand(dim3 block, dim3 threads, int width, int height, curandState * randState);
-extern "C" void callCreateWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
-extern "C" void callFreeWorld(Hittable** d_list, Hittable** d_world, Camera** d_camera);
 
 class Renderer {
 public:

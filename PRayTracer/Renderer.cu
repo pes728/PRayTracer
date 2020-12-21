@@ -86,11 +86,8 @@ void Renderer::setupScene() {
     checkCudaErrors(cudaMalloc((void**)&d_randState, window->width * window->height * sizeof(curandState)));
 
     callInitRand(blocks, threads, window->width, window->height, d_randState);
-    Hittable** d_list;
     checkCudaErrors(cudaMalloc((void**)&d_list, 2 * sizeof(Hittable*)));
-    Hittable** d_world;
     checkCudaErrors(cudaMalloc((void**)&d_world, sizeof(Hittable*)));
-    Camera** d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera*)));
     callCreateWorld(d_list, d_world, d_camera);
     checkCudaErrors(cudaGetLastError());
@@ -98,7 +95,15 @@ void Renderer::setupScene() {
 }
 
 void Renderer::cleanup() {
+    checkCudaErrors(cudaDeviceSynchronize());
     callFreeWorld(d_list, d_world, d_camera);
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaFree(d_camera));
+    checkCudaErrors(cudaFree(d_world));
+    checkCudaErrors(cudaFree(d_list));
+    checkCudaErrors(cudaFree(d_randState));
     window->cleanup();
+
+    cudaDeviceReset();
 }
 
