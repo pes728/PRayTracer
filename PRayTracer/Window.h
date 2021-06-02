@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+#include <curand_kernel.h>
 
 #include <stdlib.h>
 
@@ -25,8 +26,6 @@ public:
 private:
 	void initOpenGL();
 };
-
-void resize(GLFWwindow* window, int width, int height);
 
 void toggleFullscreen(GLFWwindow* window);
 

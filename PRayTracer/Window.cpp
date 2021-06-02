@@ -4,10 +4,8 @@ Window::Window(const char* windowName, bool isFullscreen, int width, int height)
 {
     this->width = width;
     this->height = height;
+    this->isFullscreen = isFullscreen;
     createWindow(windowName);
-    //toggleFullscreen flips isFullscreen
-    this->isFullscreen = !isFullscreen;
-    toggleFullscreen(windowHandle);
 }
 
 void Window::createWindow(const char* windowName)
@@ -22,21 +20,21 @@ void Window::createWindow(const char* windowName)
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-    /* Create a windowed mode window and its OpenGL context */
-    windowHandle = glfwCreateWindow(width, height, windowName, NULL, NULL);
+
+    if (isFullscreen) {
+        windowHandle = glfwCreateWindow(width, height, windowName, monitor, NULL);
+    }
+    else {
+        windowHandle = glfwCreateWindow(width, height, windowName, NULL, NULL);
+    }
+
     if (!windowHandle)
     {
         glfwTerminate();
         exit(-1);
     }
 
-    /* Make the window's context current */
     glfwMakeContextCurrent(windowHandle);
-
-    glfwSetWindowUserPointer(windowHandle, this);
-
-    glfwSetWindowSizeCallback(windowHandle, resize);
-
 
     initOpenGL();
 }
@@ -87,47 +85,6 @@ void Window::cleanup()
     glDeleteFramebuffers(1, &framebuffer);
 
     glfwDestroyWindow(windowHandle);
-}
-
-
-void resize(GLFWwindow* window, int width, int height) {
-    Window* w = (Window*)glfwGetWindowUserPointer(window);
-
-    w->width = width;
-    w->height = height;
-
-    glViewport(0, 0, width, height);
-
-    int tempW, tempH;
-
-    glfwGetFramebufferSize(window, &tempW, &tempH);
-
-    cudaGraphicsUnregisterResource(w->textureCudaResource);
-
-    glBindTexture(GL_TEXTURE_2D, w->texture);
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    }
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    cudaGraphicsGLRegisterImage(&w->textureCudaResource, w->texture, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
-}
-
-void toggleFullscreen(GLFWwindow* window) {
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
-    Window* w = (Window*)glfwGetWindowUserPointer(window);
-
-    std::cout << w->isFullscreen << std::endl;
-
-    if (!w->isFullscreen) {
-        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
-        w->isFullscreen = true;
-    }
-    else {
-        glfwSetWindowMonitor(window, NULL, mode->width / 2, mode->height / 2, w->width, w->height, GLFW_DONT_CARE);
-        w->isFullscreen = false;
-    }
 }
 
 void keyIn(GLFWwindow* window, int key, int scancode, int action, int mods)

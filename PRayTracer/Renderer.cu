@@ -80,9 +80,17 @@ void Renderer::init(Window* window, int samples, int threadX, int threadY)
     blocks = dim3(window->width / threadX + 1, window->height / threadY + 1);
     threads = dim3(threadX, threadY);
     this->samples = samples;
+
+    glfwSetWindowUserPointer(window->windowHandle, this);
+    //glfwSetWindowSizeCallback(window->windowHandle, resize);
 }
 
 void Renderer::setupScene() {
+    std::cout << window->width * window->height * sizeof(curandState) << std::endl;
+
+
+    
+    
     checkCudaErrors(cudaMalloc((void**)&d_randState, window->width * window->height * sizeof(curandState)));
 
     callInitRand(blocks, threads, window->width, window->height, d_randState);
@@ -107,3 +115,49 @@ void Renderer::cleanup() {
     cudaDeviceReset();
 }
 
+void resize(GLFWwindow* window, int width, int height) {
+    Renderer* r = (Renderer*)glfwGetWindowUserPointer(window);
+
+    r->window->width = width;
+    r->window->height = height;
+
+    glViewport(0, 0, width, height);
+
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    checkCudaErrors(cudaFree(r->d_randState));
+
+    checkCudaErrors(cudaMalloc((void**)&r->d_randState, r->window->width * r->window->height * sizeof(curandState)));
+
+    callInitRand(r->blocks, r->threads, r->window->width, r->window->height, r->d_randState);
+
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    cudaGraphicsUnregisterResource(r->window->textureCudaResource);
+
+    glBindTexture(GL_TEXTURE_2D, r->window->texture);
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    cudaGraphicsGLRegisterImage(&r->window->textureCudaResource, r->window->texture, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
+}
+
+void toggleFullscreen(GLFWwindow* window) {
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+    Renderer* r = (Renderer*)glfwGetWindowUserPointer(window);
+
+    std::cout << r->window->isFullscreen << std::endl;
+
+    if (!r->window->isFullscreen) {
+        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+        r->window->isFullscreen = true;
+    }
+    else {
+        glfwSetWindowMonitor(window, NULL, mode->width / 2, mode->height / 2, r->window->width, r->window->height, GLFW_DONT_CARE);
+        r->window->isFullscreen = false;
+    }
+}

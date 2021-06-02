@@ -38,3 +38,7 @@ public:
 	void render(void (*renderFunc)(dim3 blocks, dim3 threads, cudaSurfaceObject_t surface, int width, int height, int samples, Camera** camera, Hittable** world, float dt, curandState* randState));
 	void cleanup();
 };
+
+void resize(GLFWwindow* window, int width, int height);
+
+void toggleFullscreen(GLFWwindow* window);
